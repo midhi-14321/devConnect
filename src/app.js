@@ -6,6 +6,6 @@ app.use((req, res) => {
 });
 
 app.listen(2000, () => {
-  console.log("server is successfully updated on port 4444");
+  console.log("server is successfully updated on port 2000");
 });
    
