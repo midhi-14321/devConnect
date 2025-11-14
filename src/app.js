@@ -20,7 +20,7 @@ app.post("/signup", async (req, res) => {
 });
 
 connectDB()
-  .then(() => {
+  .then(() => { 
     app.listen(2000, () => {
       console.log("server running on the port 2000");
     });
@@ -28,3 +28,5 @@ connectDB()
   .catch((err) => {
     console.error("database cannot be established");
   });
+
+  
