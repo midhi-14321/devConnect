@@ -1,10 +1,30 @@
-const express = require("express"); // import from node modules
+const express = require("express");
+const connectDB = require("./config/database");
+const app = express();
+const User = require("./models/user");
 
-const app = express(); // calling the express
-app.use((req, res) => {
-  res.send("server is updating automatically");
+app.post("/signup", async (req, res) => {
+  // creating a new instance of the user modal
+  const user = new User({
+    firstName: "John",
+    lastName: "Dee",
+    emailId: "abc@gmail.com",
+    password: "abc@2025",
+  });
+  try {
+    await user.save();
+    res.send("user added successfully ");
+  } catch (err) {
+    req.status(400).send("error saving the data" + err.message);
+  }
 });
 
-app.listen(2000, () => {
-  console.log("server is successfully updated on port 2000");
-});
+connectDB()
+  .then(() => {
+    app.listen(2000, () => {
+      console.log("server running on the port 2000");
+    });
+  })
+  .catch((err) => {
+    console.error("database cannot be established");
+  });
