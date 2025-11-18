@@ -3,11 +3,11 @@ const connectDB = require("./config/database");
 const { validateSignUpData } = require("./utils/validation");
 const app = express();
 const User = require("./models/user");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcrypt"); // to encrypt/decript the password i.e secerly storing in the DB
 const cookieParser = require("cookie-parser"); // it is a middleware to read cookies
-const jwt = require("jsonwebtoken");
-app.use(express.json());
-app.use(cookieParser()); //
+const jwt = require("jsonwebtoken"); // generate the JWT token
+app.use(express.json()); // will do read the JSON data and convert the data to js object and add the data to (req).body
+app.use(cookieParser()); // It adds a middleware to your Express app that automatically reads cookies from every incoming request and puts them inside
 app.post("/signup", async (req, res) => {
   try {
     //validation of data
@@ -66,6 +66,7 @@ app.post("/login", async (req, res) => {
 //   }
 // });
 
+// profile API
 app.get("/profile", async (req, res) => {
   const cookies = req.cookies;
   const { token } = cookies;
@@ -175,3 +176,25 @@ connectDB()
   .catch((err) => {
     console.error("database cannot be established");
   });
+
+/*token process
+
+=> user logs in => server verify email and password => if both are valid =>
+creates a unique JWT token => server sends the token to user inside cookies => so browser stores the token in cookies => next time user is requested any api like /profile API => server receives the token through browser => server verify the token through secret key while token is creating initial => if it is valid => user allowed to navigate to requested API => otherwise not allowed  
+
+=> token is divided three parts like ex:- aaa.bbb.ccc
+
+1)header -> algorithm and type of token
+2)payload -> userID(user data)
+3)signature -> cryptographic function , token is created by server , not modified by anyone
+
+how data user data is storing in the database?
+
+
+user data -> frontend send the request to backend -> express server receive 
+
+the request -> mongoose creates a new instance for data -> mongoose saves 
+
+the data to mongoDB -> mongoDB stores the data
+
+*/
