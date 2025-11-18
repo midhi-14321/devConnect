@@ -1,17 +1,54 @@
 const express = require("express");
 const connectDB = require("./config/database");
+const { validateSignUpData } = require("./utils/validation");
 const app = express();
 const User = require("./models/user");
+const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser"); // it is a middleware to read cookies
+const jwt = require("jsonwebtoken");
 app.use(express.json());
+app.use(cookieParser()); //
 app.post("/signup", async (req, res) => {
-  const user = new User(req.body);
   try {
+    //validation of data
+
+    validateSignUpData(req);
+    const { password } = req.body;
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log(passwordHash);
+    req.body.password = passwordHash;
+
+    const user = new User(req.body);
     await user.save();
     res.send("user added successfully");
   } catch (err) {
-    res.status(400).send("error saving the data" + err.message);
+    res.status(400).send("ERROR : " + err.message);
   }
   console.log(req.body);
+});
+
+/* the flow is --> when user is login with emailId and password then first checking the emailId is present in the Database or not . if emailId is present in the DB then checking the password is matching with database then respond in sending to user with login successfull . otherwise respond is Invalid creditials */
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("emaiid is not present in DB");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (isPasswordValid) {
+      const token = jwt.sign({ _id: user._id }, "devConnect@2002");
+      console.log(token);
+      res.cookie("token", token);
+      res.send("user login successfull");
+    } else {
+      throw new Error("Invalid Creditials");
+    }
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
+  }
 });
 
 // app.get("/user", async (req, res) => {
@@ -29,6 +66,28 @@ app.post("/signup", async (req, res) => {
 //   }
 // });
 
+app.get("/profile", async (req, res) => {
+  const cookies = req.cookies;
+  const { token } = cookies;
+  try {
+    if (!token) {
+      throw new Error("Invalid token");
+    }
+    //verify my token
+    const decodeToken = await jwt.verify(token, "devConnect@2002");
+
+    const { _id } = decodeToken;
+    console.log("Looged in user is: " + _id);
+    const user = await User.findById(_id);
+    if (!user) {
+      throw new Error("user does not exist");
+    }
+    res.send(user);
+  } catch (err) {
+    res.status(400).send("ERROR: " + err.message);
+  }
+});
+
 app.get("/user", async (req, res) => {
   const email = req.body.emailId;
   try {
@@ -43,6 +102,7 @@ app.get("/user", async (req, res) => {
   }
 });
 
+/* getting all the users from the db bcz it is feed api */
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
@@ -52,6 +112,7 @@ app.get("/feed", async (req, res) => {
   }
 });
 
+/* finding the particular user requested id and deleting from the db */
 app.delete("/user", async (req, res) => {
   const userId = req.body.id;
   try {
@@ -67,6 +128,8 @@ app.delete("/user", async (req, res) => {
   }
 });
 
+/* updating the existing data which is present in the db*/
+
 app.patch("/user/:id", async (req, res) => {
   const userId = req.params?.id;
   const updateData = req.body;
@@ -81,6 +144,7 @@ app.patch("/user/:id", async (req, res) => {
       "password",
       "age",
     ];
+
     const isUpdatedAllowed = Object.keys(updateData).every((k) =>
       allowUpdates.includes(k)
     );
