@@ -7,7 +7,7 @@ app.post("/signup", async (req, res) => {
   const user = new User(req.body);
   try {
     await user.save();
-    res.send("user added successfully ");
+    res.send("user added successfully");
   } catch (err) {
     res.status(400).send("error saving the data" + err.message);
   }

@@ -47,7 +47,7 @@ const userSchema = mongoose.Schema(
     },
     about: {
       type: String,
-      default: "This is a default about of the user",
+      default: "This is a default about of the User",
     },
   },
   {
