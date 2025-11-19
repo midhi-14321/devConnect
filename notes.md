@@ -486,3 +486,22 @@ token is divided three parts like ex:- aaa.bbb.ccc
 1)header -> algorithm and type of token
 2)payload -> userID(user data)
 3)signature -> cryptographic function , token is created by server , not modified by anyone
+it contains algo(header+payload+secretkey)
+
+server uses the same single secret key to verify the signature
+
+working of signature in token
+
+    |
+
+verify() takes the header and payload from the received token
+
+it uses secret key to recalculate the signature
+
+the recalculated signature matches the existing signature in the token
+
+verification passes and the decoded payload is returned
+
+signature contains ---> algo(header+payload+secret)
+
+when it verify another time decoding the server sended token with exisiting signature
