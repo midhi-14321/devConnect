@@ -3,6 +3,7 @@ const connectDB = require("./config/database");
 const { validateSignUpData } = require("./utils/validation");
 const app = express();
 const User = require("./models/user");
+
 const { userAuth } = require("../src/middlewares/auth");
 const bcrypt = require("bcrypt"); // to encrypt/decript the password i.e secerly storing in the DB
 const cookieParser = require("cookie-parser"); // it is a middleware to read cookies
@@ -16,7 +17,7 @@ app.post("/signup", async (req, res) => {
 
     validateSignUpData(req);
     const { password } = req.body;
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10); // hash the password means it is not visible in the db like user entered
     console.log(passwordHash);
     req.body.password = passwordHash;
 
@@ -38,13 +39,11 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("emaiid is not present in DB");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password); // compare the user requested password and db password
 
     if (isPasswordValid) {
       //create a JWT token
-      const token = jwt.sign({ _id: user._id }, "devConnect@2002", {
-        expiresIn: "1d", // token is expires after 1 day
-      });
+      const token = await user.getJWT();
       console.log(token);
       // add the token to cookies and send the response back to the user
       res.cookie("token", token, {
@@ -61,6 +60,7 @@ app.post("/login", async (req, res) => {
 
 // profile API
 app.get("/profile", userAuth, async (req, res) => {
+  // here going to auth.js file to verify() the token
   try {
     const user = req.user;
     res.send(user);
@@ -96,13 +96,30 @@ creates a unique JWT token => server sends the token to user inside cookies => s
 2)payload -> userID(user data)
 3)signature -> cryptographic function , token is created by server , not modified by anyone
 
-how data user data is storing in the database?
+server uses the same single secret key to verify the signature 
 
+working of signature in token 
+	|
+verify() takes the header and payload from the received token 
+
+it uses secret key to recalculate the signature
+
+the recalculated signature matches the existing signature in the token
+
+verification passes and the decoded payload is returned
+
+signature contains ---> algo(header+payload+secret)
+
+when it verify another time decoding the server sended token with exisiting signature 
+
+
+how data user data is storing in the database?
 
 user data -> frontend send the request to backend -> express server receive 
 
 the request -> mongoose creates a new instance for data -> mongoose saves 
 
 the data to mongoDB -> mongoDB stores the data
+
 
 */
