@@ -3,11 +3,13 @@ const connectDB = require("./config/database");
 const { validateSignUpData } = require("./utils/validation");
 const app = express();
 const User = require("./models/user");
+const { userAuth } = require("../src/middlewares/auth");
 const bcrypt = require("bcrypt"); // to encrypt/decript the password i.e secerly storing in the DB
 const cookieParser = require("cookie-parser"); // it is a middleware to read cookies
 const jwt = require("jsonwebtoken"); // generate the JWT token
 app.use(express.json()); // will do read the JSON data and convert the data to js object and add the data to (req).body
-app.use(cookieParser()); // It adds a middleware to your Express app that automatically reads cookies from every incoming request and puts them inside
+app.use(cookieParser()); // It adds a middleware to the Express app that automatically reads cookies from every incoming request and puts them inside cookies
+
 app.post("/signup", async (req, res) => {
   try {
     //validation of data
@@ -39,9 +41,15 @@ app.post("/login", async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (isPasswordValid) {
-      const token = jwt.sign({ _id: user._id }, "devConnect@2002");
+      //create a JWT token
+      const token = jwt.sign({ _id: user._id }, "devConnect@2002", {
+        expiresIn: "1d", // token is expires after 1 day
+      });
       console.log(token);
-      res.cookie("token", token);
+      // add the token to cookies and send the response back to the user
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 3600000), // cookies will expire after 8 hours
+      });
       res.send("user login successfull");
     } else {
       throw new Error("Invalid Creditials");
@@ -51,120 +59,20 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// app.get("/user", async (req, res) => {
-//   const email = req.body.emailId;
-//   try {
-//     const users = await User.find({ emailId: email });
-//     if (users.length === 0) {
-//       res.status(404).send("user not found");
-//     } else {
-//       res.send(users);
-//       console.log(users);
-//     }
-//   } catch (err) {
-//     res.status(400).send("something went wrong");
-//   }
-// });
-
 // profile API
-app.get("/profile", async (req, res) => {
-  const cookies = req.cookies;
-  const { token } = cookies;
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    if (!token) {
-      throw new Error("Invalid token");
-    }
-    //verify my token
-    const decodeToken = await jwt.verify(token, "devConnect@2002");
-
-    const { _id } = decodeToken;
-    console.log("Looged in user is: " + _id);
-    const user = await User.findById(_id);
-    if (!user) {
-      throw new Error("user does not exist");
-    }
+    const user = req.user;
     res.send(user);
   } catch (err) {
     res.status(400).send("ERROR: " + err.message);
   }
 });
 
-app.get("/user", async (req, res) => {
-  const email = req.body.emailId;
-  try {
-    const user = await User.findOne({ emailId: email });
-    if (user) {
-      res.send(user);
-    } else {
-      res.send("user not found");
-    }
-  } catch (err) {
-    res.status(404).send("something went wrong");
-  }
-});
-
-/* getting all the users from the db bcz it is feed api */
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await User.find({});
-    res.send(users);
-  } catch (err) {
-    res.status(400).send("something went wrong");
-  }
-});
-
-/* finding the particular user requested id and deleting from the db */
-app.delete("/user", async (req, res) => {
-  const userId = req.body.id;
-  try {
-    // const user = await User.findByIdAndDelete(userId); // shorthand
-    const user = await User.findByIdAndDelete({ _id: userId });
-    if (user) {
-      res.send("user deleted successfully");
-    } else {
-      res.send("user id not found");
-    }
-  } catch (err) {
-    res.status(404).send("something went wrong");
-  }
-});
-
-/* updating the existing data which is present in the db*/
-
-app.patch("/user/:id", async (req, res) => {
-  const userId = req.params?.id;
-  const updateData = req.body;
-
-  try {
-    const allowUpdates = [
-      "firstName",
-      "lastName",
-      "userId",
-      "gender",
-      "skills",
-      "password",
-      "age",
-    ];
-
-    const isUpdatedAllowed = Object.keys(updateData).every((k) =>
-      allowUpdates.includes(k)
-    );
-
-    if (!isUpdatedAllowed) {
-      throw new Error("update now allowed");
-    }
-    // const user = await User.findByIdAndUpdate(userId, { lastName: "babu" });
-    const user = await User.findByIdAndUpdate(
-      userId,
-      {
-        $set: updateData,
-      },
-      { runValidators: true, returnDocument: "after" } // mongoose by default validators is off even you define validation in schema , it is not updated so we define runValidators and returnDocument is for to return the updated document
-    );
-    res.send("updated successfully");
-  } catch (err) {
-    res.status(404).send("something went wrong" + err.message);
-  }
+app.post("/sendconnectionRequest", userAuth, async (req, res) => {
+  const user = req.user;
+  console.log("sending the connection request");
+  res.send(user.firstName + "connection request sent");
 });
 
 connectDB()
