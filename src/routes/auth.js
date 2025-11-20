@@ -4,8 +4,6 @@ const { validateSignUpData } = require("../utils/validation");
 const User = require("../models/user");
 const bcrypt = require("bcrypt"); // to encrypt/decript the password i.e secerly storing in the DB
 
-
-
 //signup API
 authRouter.post("/signup", async (req, res) => {
   try {
@@ -53,6 +51,15 @@ authRouter.post("/login", async (req, res) => {
   } catch (err) {
     res.status(400).send("ERROR: " + err.message);
   }
+});
+
+// logout API
+
+authRouter.post("/logout", async (req, res) => {
+  res.cookie("token", null, { // setting token to null and expires data right present time 
+    expires: new Date(Date.now()),
+  });
+  res.send("user is logout successful");
 });
 
 module.exports = authRouter;
