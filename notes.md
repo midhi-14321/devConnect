@@ -492,8 +492,6 @@ server uses the same single secret key to verify the signature
 
 working of signature in token
 
-    |
-
 verify() takes the header and payload from the received token
 
 it uses secret key to recalculate the signature

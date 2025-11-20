@@ -1,7 +1,8 @@
 const { Timestamp } = require("mongodb");
 const mongoose = require("mongoose");
 const validator = require("validator");
-const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken"); // generate the JWT token
+
 const userSchema = mongoose.Schema(
   {
     firstName: {
