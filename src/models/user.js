@@ -16,8 +16,10 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      index: true,
       trim: true,
       validate(value) {
+        // validate the user email if function returns true . then save the data in DB otherwise throw error
         if (!validator.isEmail(value)) {
           throw new Error("Invalid email id" + value);
         }
@@ -57,6 +59,8 @@ const userSchema = mongoose.Schema(
     strict: "throw",
   }
 );
+
+userSchema.index({ firstName: 1, lastName: 1 }); // no two users cannot have the same firstName+lastName together
 
 userSchema.methods.getJWT = async function () {
   const user = this;

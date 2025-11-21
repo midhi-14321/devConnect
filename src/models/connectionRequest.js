@@ -6,6 +6,7 @@ const connectionRequest = new mongoose.Schema(
     fromUserId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref: "user", // reference to the user collection
     },
     toUserId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -25,10 +26,11 @@ const connectionRequest = new mongoose.Schema(
   }
 );
 
+//This middleware prevents a user from sending a connection request to themselves by validating the document before it is saved to the database.
 connectionRequest.pre("save", function (next) {
-  const connectionRequest = this;
-  //check if the fromUserId is same as toUserId
+  const connectionRequest = this; // current object
 
+  //check if the fromUserId is same as toUserId . if not save the data in db and sending the user request
   if (connectionRequest.fromUserId.equals(connectionRequest.toUserId)) {
     throw new Error("cannot send the connection to yourself");
   }
