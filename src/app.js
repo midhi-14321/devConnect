@@ -1,5 +1,5 @@
 const express = require("express");
-const connectDB = require("./config/database");
+const connectDB = require("./config/database"); 
 const app = express();
 
 const cookieParser = require("cookie-parser"); // it is a middleware to read cookies
@@ -12,7 +12,7 @@ const requestRouter = require("./routes/request");
 
 app.use("/", authRouter);
 app.use("/", profileRouter);
-app.use("/", profileRouter);
+app.use("/", requestRouter);
 connectDB()
   .then(() => {
     app.listen(2000, () => {
